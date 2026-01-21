@@ -43,6 +43,54 @@ def load_boozer(wout_path, mboz=40, nboz=40):
     }
 
 
+def trace_field_line(boozer, s_idx, alpha, n_zeta=512, n_periods=20):
+    """Trace B along a field line in Boozer coordinates.
+
+    In Boozer coordinates, field lines are straight:
+        theta_Boozer = alpha + iota * zeta_Boozer
+
+    Parameters
+    ----------
+    boozer : dict
+        Output from load_boozer()
+    s_idx : int
+        Flux surface index (0 to ns-1)
+    alpha : float
+        Field line label (0 to 2*pi)
+    n_zeta : int
+        Number of points along field line
+    n_periods : int
+        Total number of field periods to trace (centered on zeta=0)
+        Default 20 gives range [-10, +10] periods
+
+    Returns
+    -------
+    zeta : ndarray
+        Toroidal angle array (Boozer coordinate)
+    B : ndarray
+        |B| along field line
+    """
+    nfp = boozer['nfp']
+    iota = boozer['iota'][s_idx]
+    bmnc_b = boozer['bmnc_b']
+    xm_b = boozer['xm_b']
+    xn_b = boozer['xn_b']
+
+    period = 2 * np.pi / nfp
+    half_range = (n_periods / 2) * period
+    zeta = np.linspace(-half_range, half_range, n_zeta)
+
+    theta = alpha + iota * zeta
+
+    B = np.zeros_like(zeta)
+    for k in range(len(xm_b)):
+        m = xm_b[k]
+        n = xn_b[k]
+        B += bmnc_b[k, s_idx] * np.cos(m * theta - n * zeta)
+
+    return zeta, B
+
+
 def get_global_B_range(B_arrays):
     """Get global B_min, B_max across all traced field lines.
 
