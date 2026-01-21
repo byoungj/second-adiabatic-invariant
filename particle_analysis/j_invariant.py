@@ -20,6 +20,49 @@ def get_example_wout():
     return package_dir / "examples" / "configs" / "wout_W7-X_without_coil_ripple_beta0p05_d23p4_tm_reference.nc"
 
 
+def get_example_boozmn():
+    """Get path to the pre-computed W7-X boozmn file.
+
+    Returns
+    -------
+    Path
+        Path to boozmn_W7-X_without_coil_ripple_beta0p05_d23p4_tm_reference.nc
+    """
+    package_dir = Path(__file__).parent.parent
+    return package_dir / "examples" / "configs" / "boozmn_W7-X_without_coil_ripple_beta0p05_d23p4_tm_reference.nc"
+
+
+def load_boozmn(boozmn_path):
+    """Load pre-computed Boozer coordinates from a boozmn file.
+
+    This is faster than load_boozer() since it skips the transform computation.
+
+    Parameters
+    ----------
+    boozmn_path : str or Path
+        Path to boozmn_*.nc file (output from booz_xform)
+
+    Returns
+    -------
+    dict
+        Equilibrium data in Boozer coordinates
+    """
+    b = bx.Booz_xform()
+    b.read_boozmn(str(boozmn_path))
+
+    return {
+        'nfp': b.nfp,
+        'ns': b.ns_b,
+        'bmnc_b': b.bmnc_b,
+        'xm_b': b.xm_b,
+        'xn_b': b.xn_b,
+        'iota': b.iota,
+        'Boozer_I': b.Boozer_I,
+        'Boozer_G': b.Boozer_G,
+        'booz': b,
+    }
+
+
 def load_boozer(wout_path, mboz=40, nboz=40):
     """Load VMEC equilibrium and transform to Boozer coordinates.
 
@@ -56,7 +99,7 @@ def load_boozer(wout_path, mboz=40, nboz=40):
     }
 
 
-def trace_field_line(boozer, s_idx, alpha, n_zeta=512, n_periods=20):
+def trace_field_line(boozer, s_idx, alpha, n_zeta=2**15, n_periods=20):
     """Trace B along a field line in Boozer coordinates.
 
     In Boozer coordinates, field lines are straight:

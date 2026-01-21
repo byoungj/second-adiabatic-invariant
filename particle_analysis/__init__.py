@@ -7,21 +7,25 @@ v0.2 - Added diagnostic visualization module.
 
 from .j_invariant import (
     load_boozer,
+    load_boozmn,
     trace_field_line,
     get_global_B_range,
     find_wells,
     compute_j_well,
     get_example_wout,
+    get_example_boozmn,
 )
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __all__ = [
     "load_boozer",
+    "load_boozmn",
     "trace_field_line",
     "get_global_B_range",
     "find_wells",
     "compute_j_well",
     "get_example_wout",
+    "get_example_boozmn",
 ]
 
 try:
