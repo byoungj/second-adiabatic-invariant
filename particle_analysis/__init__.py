@@ -11,15 +11,17 @@ from .j_invariant import (
     get_global_B_range,
     find_wells,
     compute_j_well,
+    get_example_wout,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __all__ = [
     "load_boozer",
     "trace_field_line",
     "get_global_B_range",
     "find_wells",
     "compute_j_well",
+    "get_example_wout",
 ]
 
 try:

@@ -9,18 +9,16 @@ Demonstrates the full workflow:
 """
 
 import numpy as np
-from pathlib import Path
 from particle_analysis import (
     load_boozer,
     trace_field_line,
     find_wells,
     compute_j_well,
+    get_example_wout,
 )
 
 # Load VMEC equilibrium and transform to Boozer coordinates
-examples_dir = Path(__file__).parent
-wout_path = examples_dir / "configs" / "wout_W7-X_without_coil_ripple_beta0p05_d23p4_tm_reference.nc"
-boozer = load_boozer(str(wout_path))
+boozer = load_boozer(get_example_wout())
 
 print(f"nfp = {boozer['nfp']}")
 print(f"ns = {boozer['ns']}")

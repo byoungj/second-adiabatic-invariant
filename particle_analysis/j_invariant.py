@@ -5,6 +5,19 @@ Core functionality for computing J (second adiabatic invariant).
 
 import numpy as np
 import booz_xform as bx
+from pathlib import Path
+
+
+def get_example_wout():
+    """Get path to the example W7-X wout file.
+
+    Returns
+    -------
+    Path
+        Path to wout_W7-X_without_coil_ripple_beta0p05_d23p4_tm_reference.nc
+    """
+    package_dir = Path(__file__).parent.parent
+    return package_dir / "examples" / "configs" / "wout_W7-X_without_coil_ripple_beta0p05_d23p4_tm_reference.nc"
 
 
 def load_boozer(wout_path, mboz=40, nboz=40):
@@ -12,7 +25,7 @@ def load_boozer(wout_path, mboz=40, nboz=40):
 
     Parameters
     ----------
-    wout_path : str
+    wout_path : str or Path
         Path to VMEC wout_*.nc file
     mboz : int
         Number of poloidal Fourier modes for Boozer transform
@@ -25,7 +38,7 @@ def load_boozer(wout_path, mboz=40, nboz=40):
         Equilibrium data in Boozer coordinates
     """
     b = bx.Booz_xform()
-    b.read_wout(wout_path)
+    b.read_wout(str(wout_path))
     b.mboz = mboz
     b.nboz = nboz
     b.run()
