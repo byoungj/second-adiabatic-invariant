@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "particle_analysis"
-version = "0.1.0"
+version = "0.2.0"
 description = "Compute J (second adiabatic invariant) for stellarator configurations"
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -18,4 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
+]
+viz = [
+    "matplotlib",
 ]
