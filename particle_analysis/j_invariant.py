@@ -47,19 +47,31 @@ def load_boozmn(boozmn_path):
     dict
         Equilibrium data in Boozer coordinates
     """
-    b = bx.Booz_xform()
-    b.read_boozmn(str(boozmn_path))
+    from scipy.io import netcdf_file
+
+    f = netcdf_file(str(boozmn_path), 'r')
+
+    nfp = int(f.variables['nfp_b'].data)
+    bmnc_b = f.variables['bmnc_b'][:].T.copy()
+    xm_b = f.variables['ixm_b'][:].copy()
+    xn_b = f.variables['ixn_b'][:].copy()
+    iota = f.variables['iota_b'][1:].copy()
+    Boozer_G = f.variables['bvco_b'][1:].copy()
+    Boozer_I = f.variables['buco_b'][1:].copy()
+    ns = bmnc_b.shape[1]
+
+    f.close()
 
     return {
-        'nfp': b.nfp,
-        'ns': b.ns_b,
-        'bmnc_b': b.bmnc_b,
-        'xm_b': b.xm_b,
-        'xn_b': b.xn_b,
-        'iota': b.iota,
-        'Boozer_I': b.Boozer_I,
-        'Boozer_G': b.Boozer_G,
-        'booz': b,
+        'nfp': nfp,
+        'ns': ns,
+        'bmnc_b': bmnc_b,
+        'xm_b': xm_b,
+        'xn_b': xn_b,
+        'iota': iota,
+        'Boozer_I': Boozer_I,
+        'Boozer_G': Boozer_G,
+        'booz': None,
     }
 
 
