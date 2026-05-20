@@ -33,7 +33,7 @@ class TestDataLoading:
         """Test that load_boozmn returns dict with required keys."""
         boozer = load_boozmn(get_example_boozmn())
 
-        required_keys = ['nfp', 'ns', 'bmnc_b', 'xm_b', 'xn_b', 'iota', 'Boozer_G', 'Boozer_I']
+        required_keys = ['nfp', 'ns', 'bmnc_b', 'xm_b', 'xn_b', 'iota', 'Boozer_G', 'Boozer_I', 'R_major']
         for key in required_keys:
             assert key in boozer, f"Missing required key: {key}"
 
@@ -66,6 +66,16 @@ class TestDataLoading:
 
         assert np.all(np.isfinite(boozer['Boozer_G'])), "Boozer_G contains non-finite values"
         assert np.all(np.isfinite(boozer['Boozer_I'])), "Boozer_I contains non-finite values"
+
+    @pytest.mark.unit
+    def test_load_boozmn_R_major_reasonable(self):
+        """Test that R_major is a physically reasonable major radius for W7-X."""
+        boozer = load_boozmn(get_example_boozmn())
+
+        R_major = boozer['R_major']
+        assert isinstance(R_major, float), "R_major should be a float"
+        assert np.isfinite(R_major), "R_major should be finite"
+        assert 4.0 < R_major < 7.0, f"R_major={R_major} outside expected W7-X range (~5.5 m)"
 
     @pytest.mark.unit
     def test_load_boozmn_nfp_positive_integer(self):

@@ -58,9 +58,13 @@ def load_boozmn(boozmn_path):
     iota = f.variables['iota_b'][1:].copy()
     Boozer_G = f.variables['bvco_b'][1:].copy()
     Boozer_I = f.variables['buco_b'][1:].copy()
+    rmnc_b = f.variables['rmnc_b'][:].copy()
     ns = bmnc_b.shape[1]
 
     f.close()
+
+    i00 = np.where((xm_b == 0) & (xn_b == 0))[0][0]
+    R_major = float(rmnc_b[-1, i00])
 
     return {
         'nfp': nfp,
@@ -71,6 +75,7 @@ def load_boozmn(boozmn_path):
         'iota': iota,
         'Boozer_I': Boozer_I,
         'Boozer_G': Boozer_G,
+        'R_major': R_major,
         'booz': None,
     }
 
@@ -98,6 +103,9 @@ def load_boozer(wout_path, mboz=40, nboz=40):
     b.nboz = nboz
     b.run()
 
+    i00 = np.where((b.xm_b == 0) & (b.xn_b == 0))[0][0]
+    R_major = float(b.rmnc_b[i00, -1])
+
     return {
         'nfp': b.nfp,
         'ns': b.ns_in,
@@ -107,6 +115,7 @@ def load_boozer(wout_path, mboz=40, nboz=40):
         'iota': b.iota,
         'Boozer_I': b.Boozer_I,
         'Boozer_G': b.Boozer_G,
+        'R_major': R_major,
         'booz': b,
     }
 
@@ -150,30 +159,54 @@ def trace_field_line(boozer, s_idx, alpha, n_zeta=2**15, n_periods=20):
 
     theta = alpha + iota * zeta
 
-    B = np.zeros_like(zeta)
-    for k in range(len(xm_b)):
-        m = xm_b[k]
-        n = xn_b[k]
-        B += bmnc_b[k, s_idx] * np.cos(m * theta - n * zeta)
+    phases = xm_b[:, None] * theta[None, :] - xn_b[:, None] * zeta[None, :]
+    B = np.dot(bmnc_b[:, s_idx], np.cos(phases))
 
     return zeta, B
 
 
-def get_global_B_range(B_arrays):
-    """Get global B_min, B_max across all traced field lines.
+def get_global_B_range(boozer, n_rho=11, n_alpha=8, n_periods=20, n_zeta=1024):
+    """Compute global B_min, B_max across the entire equilibrium.
+
+    Traces field lines across multiple flux surfaces and field line
+    labels to determine the global B range. This is essential for
+    consistent pitch-angle normalization across surfaces.
 
     Parameters
     ----------
-    B_arrays : list of ndarray
-        List of B arrays from multiple (s, alpha) traces
+    boozer : dict
+        Equilibrium data from load_boozer() or load_boozmn()
+    n_rho : int, optional
+        Number of flux surfaces to sample (evenly spaced in rho space). Default 11.
+    n_alpha : int, optional
+        Number of field line labels (alpha values) to sample per surface. Default 8.
+    n_periods : int, optional
+        Number of field periods to trace per field line. Default 20.
+    n_zeta : int, optional
+        Number of points along each field line. Default 1024 (sufficient for min/max).
 
     Returns
     -------
     tuple
         (B_min_global, B_max_global)
     """
-    all_B = np.concatenate(B_arrays)
-    return all_B.min(), all_B.max()
+    ns = boozer['ns']
+
+    rho_values = np.linspace(0, 1, n_rho)
+    s_indices = np.round(rho_values**2 * (ns - 1)).astype(int)
+    s_indices = np.unique(s_indices)
+
+    alphas = np.linspace(0, 2*np.pi, n_alpha, endpoint=False)
+
+    B_min = np.inf
+    B_max = -np.inf
+    for s_idx in s_indices:
+        for alpha in alphas:
+            _, B = trace_field_line(boozer, s_idx, alpha, n_zeta=n_zeta, n_periods=n_periods)
+            B_min = min(B_min, B.min())
+            B_max = max(B_max, B.max())
+
+    return B_min, B_max
 
 
 def find_wells(zeta, B, B_bounce):
@@ -226,17 +259,18 @@ def compute_j_well(zeta, B, well, B_bounce, norm_factor):
         J value for this well
     """
     zeta_start, zeta_end = well
-    mask = (zeta >= zeta_start) & (zeta <= zeta_end)
+    start_idx = np.searchsorted(zeta, zeta_start)
+    end_idx = np.searchsorted(zeta, zeta_end, side='right')
 
-    zeta_w = zeta[mask]
-    B_w = B[mask]
+    zeta_w = zeta[start_idx:end_idx]
+    B_w = B[start_idx:end_idx]
 
     if len(zeta_w) < 3:
         return 0.0
 
     integrand = np.where(
         B_w < B_bounce,
-        (1 / B_w) * np.sqrt(1 - B_w / B_bounce),
+        (1 / B_w) * np.sqrt(np.maximum(0, 1 - B_w / B_bounce)),
         0
     )
 
